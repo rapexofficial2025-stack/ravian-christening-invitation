@@ -65,7 +65,7 @@ body { font-family: Arial, Helvetica, sans-serif; user-select: none; -webkit-use
 font-size: 1.1rem;
 font-weight: 500;
 line-height: 1.45;
-letter-spacing: 2px; z-index: 40; left: 15%; top: 15%; width: 380px; height: 600px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; color: #553d2c; background: #ffd968; box-shadow: 8px 13px 15px rgb(53 30 16 / .4); transform: rotate(3deg); cursor: grab; font-size: clamp(13px, 1.8vw, 23px); will-change: transform; transition: box-shadow 180ms ease, filter 180ms ease; }
+letter-spacing: 2px; z-index: 40; left: 15%; top: 15%; width: 380px; height: 600px; padding: 25px; display: flex; flex-direction: column; justify-content: space-between; color: #553d2c; background: #ffd968; box-shadow: 8px 13px 15px rgb(53 30 16 / .4); transform: rotate(3deg); cursor: grab; font-size: clamp(13px, 1.8vw, 23px); will-change: transform; transition: box-shadow 180ms ease, filter 180ms ease; }
 .sticky-note { transform-origin: top left; }
 .sticky-note::before{
     content:"";
