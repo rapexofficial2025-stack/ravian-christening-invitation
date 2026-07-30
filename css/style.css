@@ -14,10 +14,10 @@ body { font-family: Arial, Helvetica, sans-serif; user-select: none; -webkit-use
 }
 .book {
     position: relative;
-    width: min(95vw, 1120px);
+    width: min(100vw, 1180px);
     height: auto;
     max-height: 98vh;
-    transform: scale(1.12);
+    transform: scale(1);
     transform-origin:center top;
     aspect-ratio: 1507 / 997;
 
