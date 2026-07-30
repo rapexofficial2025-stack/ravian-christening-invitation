@@ -1,0 +1,23 @@
+{
+  "name": "Ravian's Christening Invitation",
+  "short_name": "Ravian",
+  "description": "A special invitation for Ravian Cael's Christening.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0a0a0a",
+  "theme_color": "#7d568e",
+  "icons": [
+    {
+      "src": "assets/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
