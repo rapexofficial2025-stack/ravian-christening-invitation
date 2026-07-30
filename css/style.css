@@ -8,16 +8,17 @@ body { font-family: Arial, Helvetica, sans-serif; user-select: none; -webkit-use
     min-height: 100%;
     display: grid;
     place-items: center;
+    touch-action:none;
     overflow: hidden;
     background: url("../assets/table.png") center / cover no-repeat;
 }
 .book {
     position: relative;
-
     width: min(95vw, 1120px);
     height: auto;
     max-height: 98vh;
-
+    transform: scale(1.12);
+    transform-origin:center top;
     aspect-ratio: 1507 / 997;
 
     perspective: 2200px;
@@ -27,7 +28,8 @@ body { font-family: Arial, Helvetica, sans-serif; user-select: none; -webkit-use
 .inside-page > img { position: absolute; height: 100%; pointer-events: none; }
 .inside-bg, .inside-overlay { inset: 0; width: 100%; object-fit: cover; }
 .inside-bg { z-index: 1; }.left-page-art { left: 0; width: 52.4%; z-index: 2; object-fit: cover; }.ravian { left: 0; width: 50%; z-index: 3; object-fit: contain; object-position: center bottom; }.inside-overlay { z-index: 4; }.right-page-art { right: 0; width: 50%; z-index: 5; object-fit: cover; }
-.cover { --bend: 0; position: absolute; z-index: 30; top: 0; bottom: 0; left: 50%; width: 50%; transform-origin: left center; transform: rotateY(var(--open)); will-change: transform; cursor: grab; transform-style: preserve-3d; }
+.cover { --bend: 0; position: absolute; z-index: 30; top: 0; bottom: 0; left: 50%; width: 50%; transform-origin: left center; transform: rotateY(var(--open)); will-change: transform; cursor: grab; transform-style: preserve-3d; touch-action: none;
+    -webkit-touch-callout: none; }
 .cover.snapping { transition: transform 880ms cubic-bezier(.2,.72,.2,1); }.cover:active { cursor: grabbing; }.cover img { width: 100%; height: 100%; display: block; object-fit: cover; pointer-events: none; }
 .cover-front, .cover-back { position: absolute;isolation: isolate; inset: 0; backface-visibility: hidden; }.cover-back { overflow: visible; transform: rotateY(180deg); }.cover-back > .left-page-art { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 .inside-bg-back {
