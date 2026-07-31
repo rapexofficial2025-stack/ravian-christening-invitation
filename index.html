@@ -24,8 +24,8 @@
 </div>
   <main class="scene">
     <p class="opening-hint" id="openingHint">Drag the cover to open</p>
-
-    <section class="book" id="book" aria-label="Interactive invitation card">
+<div class="stage" id="stage">
+<section class="book" id="book" aria-label="Interactive invitation card">
       <div class="inside-page" aria-hidden="true">
         <img class="inside-bg" src="assets/inside-background.png" draggable="false" alt="">
         <img class="right-page-art" src="assets/right-page.png" draggable="false" alt="">
@@ -69,15 +69,15 @@
           </article>
           <button class="mute-button" id="muteButton" type="button" aria-label="Mute audio" aria-pressed="false">&#128266;</button>
         </div>
-      </div>
+       </div>
     </section>
-
     <div class="ninong-choice" id="ninongChoice">
       <p class="choice-prompt">Yes Ravian, I want to be your</p>
       <div class="choice-buttons">
         <button class="choice-btn ninong" id="btnNinong" type="button">Ninong</button>
         <button class="choice-btn ninang" id="btnNinang" type="button">Ninang</button>
       </div>
+    </div>
     </div>
     <div class="final-message" id="finalMessage"></div>
 
