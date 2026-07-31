@@ -96,41 +96,41 @@ note.addEventListener('pointercancel', releasePeel);
 
 // ---------- NOTE: FALLS OFF, THEN GETS FREED FROM THE FLIPPED COVER ----------
 function fallNote() {
-  note.style.transition = 'transform 999ms cubic-bezier(0.2, 0.8, 0.2, 1)';
-  note.style.transform = `translateY(${book.getBoundingClientRect().height * 0.9}px) rotate(-16deg)`;
+  note.style.transition = 'transform 900ms cubic-bezier(.36,.66,.24,1)';
+  note.style.transform = `translateY(${book.getBoundingClientRect().height * 0.5}px) rotate(10deg)`;
 
   note.addEventListener('transitionend', function handler() {
     note.removeEventListener('transitionend', handler);
 
-    // Freeze the note's exact current on-screen box, then move it out
-    // of the rotated cover into the flat .book element. This is what
-    // stops it from flipping shut with the cover, and makes free dragging
-    // track the cursor correctly (no more mirrored-parent math).
+    // Get the current stage scale factor
+    const stageStyle = window.getComputedStyle(stage);
+    const matrix = new DOMMatrixReadOnly(stageStyle.transform);
+    const currentScale = matrix.a || 1; // 'a' holds the scaleX value
+
     const bookRect = book.getBoundingClientRect();
     const noteRect = note.getBoundingClientRect();
+    const computed = getComputedStyle(note);
+    const pT = computed.paddingTop, pR = computed.paddingRight, pB = computed.paddingBottom, pL = computed.paddingLeft;
 
-    const originalWidth = note.offsetWidth;
-    const originalHeight = note.offsetHeight;
-    
+    note.style.transition = 'none';
+    note.style.transform = '';
+    book.appendChild(note);
 
+    note.classList.add('tossed');
+    // Divide by currentScale to undo the double-scaling
+    note.style.left = `${(noteRect.left - bookRect.left) / currentScale}px`;
+    note.style.top = `${(noteRect.top - bookRect.top) / currentScale}px`;
+    note.style.right = 'auto';
+    note.style.width = `${noteRect.width / currentScale}px`;
+    note.style.height = `${noteRect.height / currentScale}px`;
+    note.style.minHeight = '0';
+    note.style.padding = `${pT} ${pR} ${pB} ${pL}`;
+
+    void note.offsetHeight;
     note.style.transition = '';
 
-    book.appendChild(note);
-    note.classList.add('tossed');
-
-    note.style.left = `${noteRect.left - bookRect.left}px`;
-    note.style.top = `${noteRect.top - bookRect.top}px`;
-
-    note.style.transform = "none";
-    note.classList.add('tossed');
-    note.style.left = `${noteRect.left - bookRect.left}px`;
-    note.style.top = `${noteRect.top - bookRect.top}px`;
-    note.style.right = 'auto';
-    note.style.width = `${originalWidth}px`;
-    note.style.height = `${originalHeight}px`;
-
     isStickyRemoved = true;
-    noteOffset = { x: 0, y: 0 };
+    applyMomentum((1.1 + Math.random() * 0.6) / currentScale, 0.3 / currentScale);
   }, { once: true });
 }
 
@@ -140,23 +140,49 @@ function drawNote() {
 }
 
 // ---------- NOTE: FREE DRAG (after it's fallen off) ----------
+let noteBasePos = { left: 0, top: 0 };
+
 note.addEventListener('pointerdown', event => {
   if (!isStickyRemoved) return;
   event.preventDefault(); note.setPointerCapture(event.pointerId);
-  noteDrag = { x: event.clientX, y: event.clientY, offsetX: noteOffset.x, offsetY: noteOffset.y };
+  cancelAnimationFrame(momentumRAF);
+  noteBasePos = { left: parseFloat(note.style.left) || 0, top: parseFloat(note.style.top) || 0 };
+  noteDrag = { x: event.clientX, y: event.clientY };
+  lastSample = { x: event.clientX, y: event.clientY, t: performance.now() };
+  noteVelocity = { x: 0, y: 0 };
   note.classList.add('dragging');
 });
+
 note.addEventListener('pointermove', event => {
   if (!noteDrag || !isStickyRemoved) return;
-  noteOffset = {
-    x: noteDrag.offsetX + (event.clientX - noteDrag.x),
-    y: noteDrag.offsetY + (event.clientY - noteDrag.y)
-  };
-  drawNote();
-});
-note.addEventListener('pointerup', () => { noteDrag = null; note.classList.remove('dragging'); });
-note.addEventListener('pointercancel', () => { noteDrag = null; note.classList.remove('dragging'); });
+  const stageStyle = window.getComputedStyle(stage);
+  const matrix = new DOMMatrixReadOnly(stageStyle.transform);
+  const currentScale = matrix.a || 1;
 
+  const dx = (event.clientX - noteDrag.x) / currentScale;
+  const dy = (event.clientY - noteDrag.y) / currentScale;
+  note.style.left = `${noteBasePos.left + dx}px`;
+  note.style.top = `${noteBasePos.top + dy}px`;
+
+  const now = performance.now();
+  const dt = Math.max(1, now - lastSample.t);
+  noteVelocity = {
+    x: (event.clientX - lastSample.x) / dt * 16,
+    y: (event.clientY - lastSample.y) / dt * 16
+  };
+  lastSample = { x: event.clientX, y: event.clientY, t: now };
+
+  const skew = Math.max(-14, Math.min(14, noteVelocity.x * 2.2));
+  note.style.setProperty('--wind-skew', `${skew.toFixed(1)}deg`);
+});
+
+note.addEventListener('pointerup', () => {
+  if (!noteDrag) return;
+  noteDrag = null;
+  note.classList.remove('dragging');
+  applyMomentum(noteVelocity.x * 0.6, noteVelocity.y * 0.6);
+});
+note.addEventListener('pointercancel', () => { noteDrag = null; note.classList.remove('dragging'); });
 // ---------- TYPING ----------
 async function typeTimed(text, letterDelay) {
   for (const letter of text) { if (typingCancelled) return; typed.textContent += letter; await wait(letterDelay); }
