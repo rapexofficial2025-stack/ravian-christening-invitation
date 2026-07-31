@@ -26,37 +26,8 @@ const endingMessage = `Kaya po, Tita at Tito,\nmay munting kahilingan ako sa iny
 const wait = ms => new Promise(resolve => window.setTimeout(resolve, ms));
 
 // ---------- COVER ----------
-function setCoverAngle(value) {
-  angle = Math.max(-180, Math.min(0, value));
-  const bend = Math.sin((Math.abs(angle) / 180) * Math.PI);
-  book.style.setProperty('--open', `${angle}deg`);
-  cover.style.setProperty('--bend', bend.toFixed(3));
-  cover.style.setProperty('--bend-shadow', `${Math.round(bend * 26)}px`);
-  cover.style.setProperty('--bend-scale', (1 - bend * .024).toFixed(3));
-  cover.style.setProperty('--bend-radius', `${Math.round(bend * 9)}%`);
-
-  const showBack = angle <= -90;
-  coverFront.style.visibility = showBack ? 'hidden' : 'visible';
-  coverBack.style.visibility = showBack ? 'visible' : 'hidden';
-}
-
-function finishCover() {
-  if (!coverDrag || isInteractionLocked) return;
-  coverDrag = null; isCardOpen = angle <= -90;
-  cover.classList.add('snapping'); setCoverAngle(isCardOpen ? -180 : 0); fadeMusic(isCardOpen); hint.style.opacity = '0';
-  window.setTimeout(() => cover.classList.remove('snapping'), 900);
-}
-cover.addEventListener('pointerdown', event => {
-  if (isInteractionLocked || event.target.closest('.sticky-note, .play-message, .mute-button')) return;
-  event.preventDefault(); cover.setPointerCapture(event.pointerId); cover.classList.remove('snapping');
-  coverDrag = { x: event.clientX, angle, width: book.getBoundingClientRect().width / 2 };
-});
-cover.addEventListener('pointermove', event => { if (coverDrag && !isInteractionLocked) setCoverAngle(coverDrag.angle + ((event.clientX - coverDrag.x) / coverDrag.width) * 180); });
-cover.addEventListener('pointerup', finishCover);
-cover.addEventListener('pointercancel', finishCover);
-
-// ---------- NOTE: PEEL PHASE (while still stuck under the tape) ----------
 const PEEL_THRESHOLD = 60;
+let noteOffset = { x: 0, y: 0 };
 
 note.addEventListener('pointerdown', event => {
   if (!isCardOpen || isStickyRemoved) return;
@@ -69,12 +40,9 @@ note.addEventListener('pointermove', event => {
   if (!noteDrag || isStickyRemoved) return;
   const dy = Math.min(0, event.clientY - noteDrag.y);
   const progress = Math.max(0, Math.min(1, -dy / PEEL_THRESHOLD));
-  note.style.setProperty('--peel', progress.toFixed(1));
- note.style.transform =
-`translateY(${dy * 0.4}px)
- perspective(600px)
- rotateX(${progress +5}deg)`;
-  tape.style.transform = `rotate(-3deg) scaleX(${Math.max(.2, 1 - progress)})`;
+  note.style.setProperty('--peel', progress.toFixed(3));
+  note.style.transform = `translateY(${dy * 0.4}px) perspective(400px) rotateX(${(-progress * 35).toFixed(1)}deg)`;
+  tape.style.transform = `rotate(-2deg) scaleX(${Math.max(.15, 1 - progress)})`;
 });
 
 function releasePeel() {
@@ -93,6 +61,40 @@ function releasePeel() {
 }
 note.addEventListener('pointerup', releasePeel);
 note.addEventListener('pointercancel', releasePeel);
+
+function fallNote() {
+  const bookRect = book.getBoundingClientRect();
+  const dropX = 20 + Math.random() * 10;
+  const dropY = bookRect.height * 0.6;
+  note.style.transition = 'transform 900ms cubic-bezier(.36,.66,.24,1)';
+  note.style.transform = `translate(${dropX}px, ${dropY}px) rotate(${8 + Math.random() * 10}deg)`;
+  note.addEventListener('transitionend', function handler() {
+    note.removeEventListener('transitionend', handler);
+    isStickyRemoved = true;
+    note.classList.add('tossed');
+    note.style.transition = '';
+    noteOffset = { x: dropX, y: dropY };
+  }, { once: true });
+}
+
+function drawNote() {
+  if (!isStickyRemoved) return;
+  note.style.transform = `perspective(900px) translate(${noteOffset.x}px, ${noteOffset.y}px) rotate(${noteOffset.x / 16 + 8}deg)`;
+}
+
+note.addEventListener('pointerdown', event => {
+  if (!isStickyRemoved) return;
+  event.preventDefault(); note.setPointerCapture(event.pointerId);
+  noteDrag = { x: event.clientX, y: event.clientY, offsetX: noteOffset.x, offsetY: noteOffset.y };
+  note.classList.add('dragging');
+});
+note.addEventListener('pointermove', event => {
+  if (!noteDrag || !isStickyRemoved) return;
+  noteOffset = { x: noteDrag.offsetX + (event.clientX - noteDrag.x), y: noteDrag.offsetY + (event.clientY - noteDrag.y) };
+  drawNote();
+});
+note.addEventListener('pointerup', () => { noteDrag = null; note.classList.remove('dragging'); });
+note.addEventListener('pointercancel', () => { noteDrag = null; note.classList.remove('dragging'); });
 
 // ---------- NOTE: FALLS OFF, THEN GETS FREED FROM THE FLIPPED COVER ----------
 function fallNote() {
