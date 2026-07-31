@@ -110,9 +110,9 @@ body { font-family: Arial, Helvetica, sans-serif; user-select: none; -webkit-use
 .typed-message.fading { opacity: 0; }
 
 .sticky-note {
-  position: absolute; font-family: 'Patrick Hand', cursive;
-  font-size: 18px; font-weight: 500; line-height: 1.45; letter-spacing: 1px;
-  z-index: 40; left: 15%; top: 15%; width: 240px; height: 260px; padding: 20px 16px;
+  position: flex; font-family: 'Patrick Hand', cursive;
+  font-size: 18px; font-weight: 500; line-height: 1.15; letter-spacing: 1.4px;
+  z-index: 40; left: 15%; top: 15%; width: 240px; height: 320px; padding: 16px 14px;
   display: flex; flex-direction: column; justify-content: space-between;
   color: #553d2c; background: #ffd968; box-shadow: 8px 13px 15px rgb(53 30 16 / .4);
   transform: rotate(3deg); transform-origin: top center; cursor: grab;
