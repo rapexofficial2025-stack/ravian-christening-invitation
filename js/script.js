@@ -249,3 +249,17 @@ muteButton.addEventListener('click', () => {
 // ---------- INIT ----------
 setCoverAngle(0);
 music.volume = 0;
+
+const stage = document.getElementById('stage');
+const STAGE_W = 1340;
+const STAGE_H = 662;
+
+function fitStage() {
+  const availW = window.innerWidth * 0.94;
+  const availH = window.innerHeight * 0.90;
+  const scale = Math.min(availW / STAGE_W, availH / STAGE_H, 1);
+  stage.style.transform = `scale(${scale})`;
+}
+fitStage();
+window.addEventListener('resize', fitStage);
+window.addEventListener('orientationchange', () => window.setTimeout(fitStage, 200));
