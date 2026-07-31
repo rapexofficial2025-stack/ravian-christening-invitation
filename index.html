@@ -10,11 +10,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ravian's Christening">
-<meta name="theme-color" content="#7d568e">
+<meta name="theme-color" content="
+#7d568e">
 <link rel="apple-touch-icon" href="assets/icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icon.png">
 <link rel="icon" type="image/png" sizes="512x512" href="assets/icon.png">
-
 <meta name="description" content="You're invited to Ravian Cael's Christening.">
 </head>
 <body>
@@ -24,8 +24,7 @@
 </div>
   <main class="scene">
     <p class="opening-hint" id="openingHint">Drag the cover to open</p>
-<div class="stage" id="stage">
-<section class="book" id="book" aria-label="Interactive invitation card">
+    <section class="book" id="book" aria-label="Interactive invitation card">
       <div class="inside-page" aria-hidden="true">
         <img class="inside-bg" src="assets/inside-background.png" draggable="false" alt="">
         <img class="right-page-art" src="assets/right-page.png" draggable="false" alt="">
@@ -33,7 +32,6 @@
           <p class="typed-message" id="typedMessage" aria-live="polite"></p>
         </div>
       </div>
-
       <div class="cover" id="cover" role="button" tabindex="0" aria-label="Drag invitation cover to open">
         <img class="cover-front" src="assets/cover.png" draggable="false" alt="Invitation cover">
         <div class="cover-back">
@@ -67,9 +65,10 @@
             </span><b> </b><i></i>
             <small>PUSH TO REMOVE ↗</small>
           </article>
-          <button class="mute-button" id="muteButton" type="button" aria-label="Mute audio" aria-pressed="false">&#128266;</button>
+          <button class="mute-button" id="muteButton" type="button" aria-label="Mute audio" aria-pressed="false">&
+#128266;</button>
         </div>
-       </div>
+      </div>
     </section>
     <div class="ninong-choice" id="ninongChoice">
       <p class="choice-prompt">Yes Ravian, I want to be your</p>
@@ -78,9 +77,7 @@
         <button class="choice-btn ninang" id="btnNinang" type="button">Ninang</button>
       </div>
     </div>
-    </div>
     <div class="final-message" id="finalMessage"></div>
-
     <audio id="backgroundMusic" src="audio/play-piano.mp3" preload="auto" loop></audio>
     <audio id="ravianVoice" preload="none"></audio>
   </main>
