@@ -12,17 +12,17 @@ body { font-family: Arial, Helvetica, sans-serif; user-select: none; -webkit-use
     overflow: hidden;
     background: url("../assets/table.png") center / cover no-repeat;
 }
-.book {
-    position: relative;
-    width: min(100vw, 1180px);
-    height: auto;
-    max-height: 98vh;
-    transform: scale(1);
-    transform-origin:center top;
-    aspect-ratio: 1507 / 997;
+.book{
+    position:relative;
 
-    perspective: 2200px;
-    filter: drop-shadow(0 28px 22px rgb(25 12 8 / .42));
+    height:92vh;
+    width:auto;
+
+    aspect-ratio:1507 / 997;
+
+    perspective:2200px;
+
+    filter:drop-shadow(0 28px 22px rgb(25 12 8 / .42));
 }
 .inside-page { position: absolute; inset: 0; overflow: visible; border-radius: 10px; clip-path: inset(0 0 0 50%); }
 .inside-page > img { position: absolute; height: 100%; pointer-events: none; }
@@ -71,18 +71,18 @@ body { font-family: Arial, Helvetica, sans-serif; user-select: none; -webkit-use
 .typed-message { min-height: 1em; margin: -5; color: #64466e; font:italic clamp(11px,1.2vw,18px)/1.4 Georgia,serif;/1.45 Georgia, serif; white-space: pre-line; transition: opacity .5s ease; }.typed-message.fading { opacity: 0; }
 
 .sticky-note { position: absolute;font-family: 'Patrick Hand', cursive;
-font-size: 1.1rem;
+font-size: clamp(13px, 1.8vw, 23px);
 font-weight: 500;
 line-height: 1.45;
-letter-spacing: 2px; z-index: 40; left: 15%; top: 15%; width: 240px; height: 260px; padding: 05px; display: flex; flex-direction: column; justify-content: space-between; color: #553d2c; background: #ffd968; box-shadow: 8px 13px 15px rgb(53 30 16 / .4); transform: rotate(3deg); cursor: grab; font-size: clamp(13px, 1.8vw, 23px); will-change: transform; transition: box-shadow 180ms ease, filter 180ms ease; }
+letter-spacing: 2px; z-index: 40; left: 15%; top: 15%; width: 240px; height: 260px; padding: 05px; display: flex; flex-direction: column; justify-content: space-between; color: #553d2c; background: #ffd968; box-shadow: 8px 13px 15px rgb(53 30 16 / .4); transform: rotate(3deg); cursor: grab; font-size: clamp(11px, 1.4vw, 18px); will-change: transform; transition: box-shadow 180ms ease, filter 180ms ease; }
 
-.sticky-note { transform-origin: top left; }
+.sticky-note { transform-origin: top center; }
 
 .sticky-note::before{
     content:"";
     position:absolute;
-    left:20px;
-    top:0;
+    left:35px;
+    top:5;
     bottom:0;
     width:3px;
     background:
@@ -134,7 +134,7 @@ ninong-choice{
     z-index:80;
 
     left:50%;
-    bottom:4%;
+    bottom:20;
 
     top:auto;
 
@@ -143,12 +143,12 @@ ninong-choice{
     display:flex;
     flex-direction:column;
     align-items:center;
-
+    padding-bottom:env(safe-area-inset-bottom);
     gap:10px;
 
     visibility:hidden;
 
-    transform:translate(-50%,120%);
+    transform:translate(-50%);
 }
 .ninong-choice.visible {
   visibility: visible;
@@ -280,13 +280,16 @@ rotate-prompt .icon {
 
 /* Most phones in landscape */
   @media screen and (max-width: 950px){
+    /* Phone-only adjustments */
 
+}
     /* Move the book slightly upward */
     .scene{
         display:flex;
         justify-content:center;
         align-items:flex-start;
         padding-top:10px;
+        overflow:visible;
     }
 
     /* Book size */
@@ -324,21 +327,21 @@ rotate-prompt .icon {
 
     /* Message Area */
     .message-area{
-        left:54%;
+        left:50%;
         top:12%;
-        width:31%;
+        width:30%;
     }
 
     .typed-message{
         font-size:14px;
-        line-height:1.35;
+        line-height:1;
     }
 
     /* Speaker Button */
     .mute-button{
-        transform:scale(.82);
-        right:12px;
-        top:10px;
+        transform:scale(.72);
+        right:8px;
+        top:8px;
     }
 
     /* Ninong / Ninang Buttons */
@@ -354,13 +357,14 @@ rotate-prompt .icon {
         display:flex;
         justify-content:center;
         gap:12px;
+        
 
     }
 
     .ninong-choice button{
 
         padding:12px 18px;
-
+        padding-bottom:env(safe-area-inset-bottom);
         font-size:14px;
 
     }
