@@ -142,48 +142,21 @@ function drawNote() {
 }
 
 // ---------- NOTE: FREE DRAG (after it's fallen off) ----------
-let noteBasePos = { left: 0, top: 0 };
-
 note.addEventListener('pointerdown', event => {
   if (!isStickyRemoved) return;
   event.preventDefault(); note.setPointerCapture(event.pointerId);
-  cancelAnimationFrame(momentumRAF);
-  noteBasePos = { left: parseFloat(note.style.left) || 0, top: parseFloat(note.style.top) || 0 };
-  noteDrag = { x: event.clientX, y: event.clientY };
-  lastSample = { x: event.clientX, y: event.clientY, t: performance.now() };
-  noteVelocity = { x: 0, y: 0 };
+  noteDrag = { x: event.clientX, y: event.clientY, offsetX: noteOffset.x, offsetY: noteOffset.y };
   note.classList.add('dragging');
 });
-
 note.addEventListener('pointermove', event => {
   if (!noteDrag || !isStickyRemoved) return;
-  const stageStyle = window.getComputedStyle(stage);
-  const matrix = new DOMMatrixReadOnly(stageStyle.transform);
-  const currentScale = matrix.a || 1;
-
-  const dx = (event.clientX - noteDrag.x) / currentScale;
-  const dy = (event.clientY - noteDrag.y) / currentScale;
-  note.style.left = `${noteBasePos.left + dx}px`;
-  note.style.top = `${noteBasePos.top + dy}px`;
-
-  const now = performance.now();
-  const dt = Math.max(1, now - lastSample.t);
-  noteVelocity = {
-    x: (event.clientX - lastSample.x) / dt * 16,
-    y: (event.clientY - lastSample.y) / dt * 16
+  noteOffset = {
+    x: noteDrag.offsetX + (event.clientX - noteDrag.x),
+    y: noteDrag.offsetY + (event.clientY - noteDrag.y)
   };
-  lastSample = { x: event.clientX, y: event.clientY, t: now };
-
-  const skew = Math.max(-14, Math.min(14, noteVelocity.x * 2.2));
-  note.style.setProperty('--wind-skew', `${skew.toFixed(1)}deg`);
+  drawNote();
 });
-
-note.addEventListener('pointerup', () => {
-  if (!noteDrag) return;
-  noteDrag = null;
-  note.classList.remove('dragging');
-  applyMomentum(noteVelocity.x * 0.6, noteVelocity.y * 0.6);
-});
+note.addEventListener('pointerup', () => { noteDrag = null; note.classList.remove('dragging'); });
 note.addEventListener('pointercancel', () => { noteDrag = null; note.classList.remove('dragging'); });
 // ---------- TYPING ----------
 async function typeTimed(text, letterDelay) {
