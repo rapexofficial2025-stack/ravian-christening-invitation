@@ -15,73 +15,124 @@ const ninongChoice = document.getElementById('ninongChoice');
 const btnNinong = document.getElementById('btnNinong');
 const btnNinang = document.getElementById('btnNinang');
 const finalMessage = document.getElementById('finalMessage');
+const rotatePrompt = document.querySelector('.rotate-prompt');
 
-let angle = 0, coverDrag = null, noteDrag = null;
-let noteOffset = { x: 5, y: 0 };
-let isCardOpen = false, isPlaying = false, isStickyRemoved = false, isInteractionLocked = false, isMuted = false, typingCancelled = false, musicFade = null;
+let angle = 0, coverDrag = null, noteDrag = null, musicFade = null;
+let noteOffset = { x: 0, y: 0 };
+let noteRotation = 0;
+let isCardOpen = false, isPlaying = false, isStickyRemoved = false;
+let isInteractionLocked = false, isMuted = false, typingCancelled = false, musicStarted = false;
 
-const openingMessage = `Greetings\nBuenas Dias! Mi Querido Tito y Tita.\n\nSa araw nang aking unang iyak at hinga,\nsinalubong agad ako nina Mama at Papa\nng pagmamahal, pag aaruga, at maraming pangarap para sa aking kinabukasan.\n\nNgunit naniniwala sila\nna mas magiging maganda ang aking paglalakbay\nsa buhay kung may mabubuting taong\ngagabay at mamahal din sa akin tulad ninyo.`;
-const endingMessage = `Kaya po, Tita at Tito,\nmay munting kahilingan ako sa inyo.\nSana ay tangapin ninyo ang natatanging papel na maging aking Ninong at Ninang.\n\nSamahan ninyo ako sa aking paglaki, gabayan! ninyo ako sa tamang landas, ipagdasal ako,\nat maging inspirasyon ko sa bawat hakbang ng aking buhay.\nAng inyong pagmamahal at patnubay ay magiging isang regalong habang buhay kong iingatan sa aking puso.\n\nNag mamahal ng marami\nRayvian Cael`;
-
+/* Split into 3 parts and paced to the ~45s video/voice length (VIDEO_DURATION_MS below). */
+const message1 = `Greetings\nBuenas Dias! Mi Querido Tito y Tita.\n\nSa araw nang aking unang iyak at hinga,\nsinalubong agad ako nina Mama at Papa\nng pagmamahal, pag aaruga, at maraming pangarap para sa aking kinabukasan.`;
+const message2 = `Ngunit naniniwala sila\nna mas magiging maganda ang aking paglalakbay\nsa buhay kung may mabubuting taong\ngagabay at mamahal din sa akin tulad ninyo.\n\nKaya po, Tita at Tito,\nmay munting kahilingan ako sa inyo.\nSana ay tanggapin ninyo ang natatanging papel na maging aking Ninong at Ninang.`;
+const message3 = `Samahan ninyo ako sa aking paglaki, gabayan ninyo ako sa tamang landas, ipagdasal ako,\nat maging inspirasyon ko sa bawat hakbang ng aking buhay.\nAng inyong pagmamahal at patnubay ay magiging isang regalong habang buhay kong iingatan sa aking puso.\n\nNagmamahal nang marami,\nRayvian Cael`;
+const VIDEO_DURATION_MS = 45000;
+const MESSAGE_PAUSE_MS = 700;
+const MESSAGE_PARTS = [message1, message2, message3];
+const MESSAGE_DELAY = Math.round((VIDEO_DURATION_MS - MESSAGE_PAUSE_MS * (MESSAGE_PARTS.length - 1)) / MESSAGE_PARTS.reduce((sum, part) => sum + part.length, 0));
 const wait = ms => new Promise(resolve => window.setTimeout(resolve, ms));
 
-// ---------- COVER ----------
-const PEEL_THRESHOLD = 60;
-let noteOffset = { x: 0, y: 0 };
+function setCoverAngle(value) {
+  angle = Math.max(-180, Math.min(0, value));
+  const bend = Math.sin((Math.abs(angle) / 180) * Math.PI);
+  const openAmount = Math.abs(angle) / 180;
+  book.style.setProperty('--open', `${angle}deg`);
+  cover.style.setProperty('--bend', bend.toFixed(3));
+  cover.style.setProperty('--bend-shadow', `${Math.round(bend * 26)}px`);
+  cover.style.setProperty('--bend-scale', (1 - bend * .024).toFixed(3));
+  cover.style.setProperty('--bend-radius', `${Math.round(bend * 9)}%`);
+  const showBack = angle <= -90;
+  coverFront.style.visibility = showBack ? 'hidden' : 'visible';
+  coverBack.style.visibility = showBack ? 'visible' : 'hidden';
+  if (openAmount >= .1 && !musicStarted) { musicStarted = true; fadeMusic(true); }
+  if (openAmount < .1 && musicStarted && !isCardOpen) { musicStarted = false; fadeMusic(false); }
+}
+function finishCover() {
+  if (!coverDrag || isInteractionLocked) return;
+  coverDrag = null;
+  isCardOpen = angle <= -90;
+  cover.classList.add('snapping');
+  setCoverAngle(isCardOpen ? -180 : 0);
+  fadeMusic(isCardOpen);
+  hint.style.opacity = isCardOpen ? '0' : '1.5';
+  window.setTimeout(() => cover.classList.remove('snapping'), 900);
+}
+cover.addEventListener('pointerdown', event => {
+  if (isInteractionLocked || event.target.closest('.sticky-note, .play-message, .mute-button')) return;
+  event.preventDefault(); cover.setPointerCapture(event.pointerId); cover.classList.remove('snapping');
+  coverDrag = { x: event.clientX, angle, width: book.getBoundingClientRect().width / 2 };
+});
+cover.addEventListener('pointermove', event => { if (coverDrag && !isInteractionLocked) setCoverAngle(coverDrag.angle + ((event.clientX - coverDrag.x) / coverDrag.width) * 180); });
+cover.addEventListener('pointerup', finishCover);
+cover.addEventListener('pointercancel', finishCover);
 
+const PEEL_THRESHOLD = 60;
 note.addEventListener('pointerdown', event => {
-  if (!isCardOpen || isStickyRemoved) return;
+  if (!isCardOpen || isStickyRemoved || isInteractionLocked) return;
   event.preventDefault(); note.setPointerCapture(event.pointerId);
   noteDrag = { y: event.clientY };
-  note.classList.add('peeling'); tape.classList.add('bending');
 });
-
 note.addEventListener('pointermove', event => {
   if (!noteDrag || isStickyRemoved) return;
   const dy = Math.min(0, event.clientY - noteDrag.y);
   const progress = Math.max(0, Math.min(1, -dy / PEEL_THRESHOLD));
   note.style.setProperty('--peel', progress.toFixed(3));
-  note.style.transform = `translateY(${dy * 0.4}px) perspective(400px) rotateX(${(-progress * 35).toFixed(1)}deg)`;
-  tape.style.transform = `rotate(-2deg) scaleX(${Math.max(.15, 1 - progress)})`;
+  note.style.transform = `translateY(${dy * .4}px) perspective(600px) rotateX(${-progress * 34}deg) rotate(3deg)`;
+  tape.style.transform = `rotate(-4deg) scaleX(${Math.max(.18, 1 - progress)})`;
 });
-
 function releasePeel() {
   if (!noteDrag || isStickyRemoved) { noteDrag = null; return; }
   noteDrag = null;
-  note.classList.remove('peeling');
   const progress = parseFloat(note.style.getPropertyValue('--peel')) || 0;
-  if (progress >= 1) {
-    tape.style.transform = ''; tape.classList.add('snapped');
-    fallNote();
-  } else {
-    note.style.setProperty('--peel', 0);
-    note.style.transform = '';
-    tape.style.transform = '';
-  }
+  if (progress >= 1) { tape.style.transform = ''; tape.classList.add('snapped'); fallNote(); }
+  else { note.style.removeProperty('--peel'); note.style.transform = ''; tape.style.transform = ''; }
 }
 note.addEventListener('pointerup', releasePeel);
 note.addEventListener('pointercancel', releasePeel);
 
+/* The note keeps its original CSS width and height. It is only re-parented to
+   .book after its fall, using the rendered pivot position to prevent jumps.
+   .sticky-note rotates around its top-left corner (transform-origin: top left),
+   so that corner - not the rotated box's centre - is what must be preserved. */
+const FALL_ROTATION = -14;
 function fallNote() {
-  const bookRect = book.getBoundingClientRect();
-  const dropX = 20 + Math.random() * 10;
-  const dropY = bookRect.height * 0.6;
-  note.style.transition = 'transform 900ms cubic-bezier(.36,.66,.24,1)';
-  note.style.transform = `translate(${dropX}px, ${dropY}px) rotate(${8 + Math.random() * 10}deg)`;
-  note.addEventListener('transitionend', function handler() {
+  const noteWidth = note.offsetWidth;
+  const noteHeight = note.offsetHeight;
+  const bookHeight = book.offsetHeight;
+  const fallX = -noteWidth * 1.08, fallY = bookHeight * .52;
+  note.style.transition = 'transform 900ms cubic-bezier(.24,.72,.28,1)';
+  note.style.transform = `translate(${fallX}px, ${fallY}px) rotate(${FALL_ROTATION}deg)`;
+  note.addEventListener('transitionend', function handler(event) {
+    if (event.propertyName !== 'transform') return;
     note.removeEventListener('transitionend', handler);
-    isStickyRemoved = true;
+    note.style.transition = 'none';
+    /* Rotation about the top-left corner never moves that corner, so measuring
+       the pivot with the rotation stripped out gives its exact landed screen position. */
+    note.style.transform = `translate(${fallX}px, ${fallY}px)`;
+    const pivotRect = note.getBoundingClientRect();
+    const bookRect = book.getBoundingClientRect();
+    const scale = bookRect.width / book.offsetWidth || 1;
+    const pivotX = (pivotRect.left - bookRect.left) / scale;
+    const pivotY = (pivotRect.top - bookRect.top) / scale;
+    book.appendChild(note);
     note.classList.add('tossed');
-    note.style.transition = '';
-    noteOffset = { x: dropX, y: dropY };
+    /* These values preserve the note's pre-fall size and rotation after its parent changes,
+       so it lands and stays exactly where the fall animation left it. */
+    note.style.width = `${noteWidth}px`;
+    note.style.height = `${noteHeight}px`;
+    note.style.left = `${pivotX}px`;
+    note.style.top = `${pivotY}px`;
+    note.style.right = 'auto';
+    noteOffset = { x: 0, y: 0 };
+    noteRotation = FALL_ROTATION;
+    note.style.transform = `rotate(${noteRotation}deg)`;
+    requestAnimationFrame(() => { note.style.transition = ''; });
+    isStickyRemoved = true;
+    book.classList.add('note-removed');
   }, { once: true });
 }
-
-function drawNote() {
-  if (!isStickyRemoved) return;
-  note.style.transform = `perspective(900px) translate(${noteOffset.x}px, ${noteOffset.y}px) rotate(${noteOffset.x / 16 + 8}deg)`;
-}
-
+function drawNote() { note.style.transform = `translate(${noteOffset.x}px, ${noteOffset.y}px) rotate(${(noteRotation + noteOffset.x / 18).toFixed(1)}deg)`; }
 note.addEventListener('pointerdown', event => {
   if (!isStickyRemoved) return;
   event.preventDefault(); note.setPointerCapture(event.pointerId);
@@ -93,174 +144,53 @@ note.addEventListener('pointermove', event => {
   noteOffset = { x: noteDrag.offsetX + (event.clientX - noteDrag.x), y: noteDrag.offsetY + (event.clientY - noteDrag.y) };
   drawNote();
 });
-note.addEventListener('pointerup', () => { noteDrag = null; note.classList.remove('dragging'); });
-note.addEventListener('pointercancel', () => { noteDrag = null; note.classList.remove('dragging'); });
+function stopNoteDrag() { noteDrag = null; note.classList.remove('dragging'); }
+note.addEventListener('pointerup', stopNoteDrag);
+note.addEventListener('pointercancel', stopNoteDrag);
 
-// ---------- NOTE: FALLS OFF, THEN GETS FREED FROM THE FLIPPED COVER ----------
-function fallNote() {
-  note.style.transition = 'transform 900ms cubic-bezier(.36,.66,.24,1)';
-  note.style.transform = `translateY(${book.getBoundingClientRect().height * 0.5}px) rotate(10deg)`;
-
-  note.addEventListener('transitionend', function handler() {
-    note.removeEventListener('transitionend', handler);
-
-    // Get the current stage scale factor
-    const stageStyle = window.getComputedStyle(stage);
-    const matrix = new DOMMatrixReadOnly(stageStyle.transform);
-    const currentScale = matrix.a || 1; // 'a' holds the scaleX value
-
-    const bookRect = book.getBoundingClientRect();
-    const noteRect = note.getBoundingClientRect();
-    const computed = getComputedStyle(note);
-    const pT = computed.paddingTop, pR = computed.paddingRight, pB = computed.paddingBottom, pL = computed.paddingLeft;
-
-    note.style.transition = 'none';
-    note.style.transform = '';
-    book.appendChild(note);
-
-    note.classList.add('tossed');
-    // Divide by currentScale to undo the double-scaling
-    note.style.left = `${(noteRect.left - bookRect.left) / currentScale}px`;
-    note.style.top = `${(noteRect.top - bookRect.top) / currentScale}px`;
-    note.style.right = 'auto';
-    note.style.width = `${noteRect.width / currentScale}px`;
-    note.style.height = `${noteRect.height / currentScale}px`;
-    note.style.minHeight = '0';
-    note.style.padding = `${pT} ${pR} ${pB} ${pL}`;
-
-    void note.offsetHeight;
-    note.style.transition = '';
-
-    isStickyRemoved = true;
-    applyMomentum((1.1 + Math.random() * 0.6) / currentScale, 0.3 / currentScale);
-  }, { once: true });
-}
-
-function drawNote() {
-  if (!isStickyRemoved) return;
-  note.style.transform = `translate(${noteOffset.x}px, ${noteOffset.y}px) rotate(${(noteOffset.x / 16 + 8).toFixed(1)}deg)`;
-}
-
-// ---------- NOTE: FREE DRAG (after it's fallen off) ----------
-note.addEventListener('pointerdown', event => {
-  if (!isStickyRemoved) return;
-  event.preventDefault(); note.setPointerCapture(event.pointerId);
-  noteDrag = { x: event.clientX, y: event.clientY, offsetX: noteOffset.x, offsetY: noteOffset.y };
-  note.classList.add('dragging');
-});
-note.addEventListener('pointermove', event => {
-  if (!noteDrag || !isStickyRemoved) return;
-  noteOffset = {
-    x: noteDrag.offsetX + (event.clientX - noteDrag.x),
-    y: noteDrag.offsetY + (event.clientY - noteDrag.y)
-  };
-  drawNote();
-});
-note.addEventListener('pointerup', () => { noteDrag = null; note.classList.remove('dragging'); });
-note.addEventListener('pointercancel', () => { noteDrag = null; note.classList.remove('dragging'); });
-// ---------- TYPING ----------
-async function typeTimed(text, letterDelay) {
-  for (const letter of text) { if (typingCancelled) return; typed.textContent += letter; await wait(letterDelay); }
-}
+async function typeTimed(text, delay) { for (const letter of text) { if (typingCancelled) return false; typed.textContent += letter; await wait(delay); } return true; }
 async function typeInvitationMessage() {
-  const fadeDuration = 600;
-  const typingDuration = 40000 - 300 - fadeDuration;
-  const letterDelay = typingDuration / (openingMessage.length + endingMessage.length);
   typed.textContent = '';
-  await typeTimed(openingMessage, letterDelay);
-  if (typingCancelled) return;
-  typed.classList.add('fading');
-  await wait(fadeDuration);
-  typed.textContent = '';
-  typed.classList.remove('fading');
-  await typeTimed(endingMessage, letterDelay);
+  for (let i = 0; i < MESSAGE_PARTS.length; i++) {
+    if (!await typeTimed(MESSAGE_PARTS[i], MESSAGE_DELAY)) return false;
+    if (i === MESSAGE_PARTS.length - 1) break;
+    typed.classList.add('fading'); await wait(MESSAGE_PAUSE_MS);
+    if (typingCancelled) return false;
+    typed.textContent = ''; typed.classList.remove('fading');
+  }
+  return true;
 }
-
-// ---------- AUDIO ----------
-async function safePlay(audio) {
-  if (!audio.src && !audio.currentSrc) return;
-  try { await audio.play(); } catch (err) { console.warn('Playback failed:', err); }
-}
+async function safePlay(audio) { if (!audio.currentSrc && !audio.src) return false; try { await audio.play(); return true; } catch (error) { console.warn('Playback failed:', error); return false; } }
 function fadeMusic(opening) {
   window.clearInterval(musicFade);
-  const target = opening ? 1 : 0;
+  const target = opening ? .22 : 0;
   if (opening) safePlay(music);
   musicFade = window.setInterval(() => {
-    const next = Math.max(0, Math.min(1, music.volume + (opening ? .05 : -.05)));
-    music.volume = next;
-    if (next === target) { window.clearInterval(musicFade); if (!opening) music.pause(); }
+    music.volume = Math.max(0, Math.min(target, music.volume + (opening ? .010 : -.025)));
+    if (music.volume === target) { window.clearInterval(musicFade); if (!opening) music.pause(); }
   }, 45);
 }
+function mediaEnded(media) { return new Promise(resolve => { if (!media.currentSrc && !media.src) return resolve(); if (media.ended) return resolve(); media.addEventListener('ended', resolve, { once: true }); media.addEventListener('error', resolve, { once: true }); }); }
 
-// ---------- PLAY BUTTON ----------
 play.addEventListener('click', async () => {
-  if (isPlaying || !isCardOpen) return;
-  isPlaying = true; isInteractionLocked = true; typingCancelled = true;
-
-  ninongChoice.classList.remove('visible', 'fading');
-  finalMessage.classList.remove('visible');
-
-  await wait(50);
-  typed.textContent = '';
-  typed.classList.remove('fading');
-  typingCancelled = false;
-
-  await wait(250);
-  try {
-    if (ravianVideo.readyState >= 1) ravianVideo.currentTime = 0;
-    if (voice.readyState >= 1) voice.currentTime = 0;
-  } catch (err) { console.warn('currentTime reset failed:', err); }
-
-  safePlay(ravianVideo);
-  safePlay(voice);
-  await typeInvitationMessage();
-});
-
-ravianVideo.addEventListener('loadedmetadata', () => {
-  ravianVideo.currentTime = 0.01; // paints frame 1 instead of a black box
-});
-
-ravianVideo.addEventListener('ended', () => {
-  ravianVideo.pause();
-  ravianVideo.currentTime = 0.01;
-  isPlaying = false;
-  isInteractionLocked = false;
+  if (isPlaying || !isCardOpen || !isStickyRemoved) return;
+  isPlaying = true; isInteractionLocked = true; play.disabled = true; typingCancelled = true;
+  ninongChoice.classList.remove('visible', 'fading'); finalMessage.classList.remove('visible');
+  typed.textContent = ''; typed.classList.remove('fading'); typingCancelled = false;
+  try { ravianVideo.currentTime = 0; voice.currentTime = 0; } catch (_) { }
+  const videoWillPlay = await safePlay(ravianVideo);
+  const voiceWillPlay = await safePlay(voice);
+  await Promise.all([typeInvitationMessage(), videoWillPlay ? mediaEnded(ravianVideo) : Promise.resolve(), voiceWillPlay ? mediaEnded(voice) : Promise.resolve()]);
+  isPlaying = false; isInteractionLocked = false; play.disabled = false;
   ninongChoice.classList.add('visible');
 });
-
-// ---------- NINONG / NINANG CHOICE ----------
+ravianVideo.addEventListener('loadedmetadata', () => { ravianVideo.currentTime = .01; });
 function chooseRole(role) {
   ninongChoice.classList.add('fading');
-  window.setTimeout(() => {
-    ninongChoice.classList.remove('visible', 'fading');
-    finalMessage.textContent = role === 'ninong' ? 'THANK YOU NINONG!' : 'THANK YOU NINANG!';
-    finalMessage.classList.add('visible');
-  }, 400);
+  window.setTimeout(() => { ninongChoice.classList.remove('visible', 'fading'); finalMessage.innerHTML = `THANK YOU<br>${role.toUpperCase()} ♥`; finalMessage.classList.add('visible'); }, 400);
 }
 btnNinong.addEventListener('click', () => chooseRole('ninong'));
 btnNinang.addEventListener('click', () => chooseRole('ninang'));
-
-// ---------- MUTE ----------
-muteButton.addEventListener('click', () => {
-  isMuted = !isMuted; music.muted = isMuted; voice.muted = isMuted;
-  muteButton.setAttribute('aria-pressed', String(isMuted));
-  muteButton.setAttribute('aria-label', isMuted ? 'Unmute audio' : 'Mute audio');
-});
-
-// ---------- INIT ----------
-setCoverAngle(0);
-music.volume = 0;
-
-const stage = document.getElementById('stage');
-const STAGE_W = 1340;
-const STAGE_H = 662;
-
-function fitStage() {
-  const availW = window.innerWidth * 0.94;
-  const availH = window.innerHeight * 0.90;
-  const scale = Math.min(availW / STAGE_W, availH / STAGE_H, 1);
-  stage.style.transform = `scale(${scale})`;
-}
-fitStage();
-window.addEventListener('resize', fitStage);
-window.addEventListener('orientationchange', () => window.setTimeout(fitStage, 200));
+muteButton.addEventListener('click', () => { isMuted = !isMuted; music.muted = isMuted; voice.muted = isMuted; ravianVideo.muted = isMuted; muteButton.setAttribute('aria-pressed', String(isMuted)); muteButton.setAttribute('aria-label', isMuted ? 'Unmute audio' : 'Mute audio'); });
+setCoverAngle(0); music.volume = 0;
+if (rotatePrompt) window.setTimeout(() => rotatePrompt.classList.add('dismissed'), 4000);
