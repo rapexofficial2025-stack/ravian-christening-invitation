@@ -2,19 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2, user-scalable=yes">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>A little message for you</title>
-  <link rel="stylesheet" href="css/style.css?v=20260730-1">
+  <link rel="stylesheet" href="css/style.css?v=20260731-mobile-1">
   <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ravian's Christening">
-<meta name="theme-color" content="
-#7d568e">
+<meta name="theme-color" content="#7d568e">
 <link rel="apple-touch-icon" href="assets/icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icon.png">
 <link rel="icon" type="image/png" sizes="512x512" href="assets/icon.png">
+
 <meta name="description" content="You're invited to Ravian Cael's Christening.">
 </head>
 <body>
@@ -23,7 +23,8 @@
   <p>Please rotate your phone<br>to landscape 💌</p>
 </div>
   <main class="scene">
-    <p class="opening-hint" id="openingHint">Drag the cover to open</p>
+    <p class="opening-hint" id="openingHint">Please Open My Invitation</p>
+
     <section class="book" id="book" aria-label="Interactive invitation card">
       <div class="inside-page" aria-hidden="true">
         <img class="inside-bg" src="assets/inside-background.png" draggable="false" alt="">
@@ -32,6 +33,7 @@
           <p class="typed-message" id="typedMessage" aria-live="polite"></p>
         </div>
       </div>
+
       <div class="cover" id="cover" role="button" tabindex="0" aria-label="Drag invitation cover to open">
         <img class="cover-front" src="assets/cover.png" draggable="false" alt="Invitation cover">
         <div class="cover-back">
@@ -46,7 +48,7 @@
             <button class="play-message" id="playMessage" type="button">▶ <span>Press Me!</span></button>
           </div>
           <div class="tape" id="tape" aria-hidden="true"></div>
-          <article class="sticky-note" id="stickyNote" aria-label="Drag this note away" role="button" tabindex="0">
+          <article class="sticky-note" id="stickyNote" aria-label="Drag this note away\" role="button" tabindex="0">
             <span>Hello Po! ❤️</span>
             <span>
               Please come to my<br>
@@ -63,24 +65,28 @@
               Love,<br>
               Ravian Cael
             </span><b> </b><i></i>
-            <small>PUSH TO REMOVE ↗</small>
+            <small>DRAG TO REMOVE ↗</small>
           </article>
-          <button class="mute-button" id="muteButton" type="button" aria-label="Mute audio" aria-pressed="false">&
-#128266;</button>
+          <button class="mute-button" id="muteButton" type="button" aria-label="Mute audio" aria-pressed="false">&#128266;</button>
         </div>
       </div>
-    </section>
-    <div class="ninong-choice" id="ninongChoice">
-      <p class="choice-prompt">Yes Ravian, I want to be your</p>
-      <div class="choice-buttons">
-        <button class="choice-btn ninong" id="btnNinong" type="button">Ninong</button>
-        <button class="choice-btn ninang" id="btnNinang" type="button">Ninang</button>
+
+      <div class="ninong-choice" id="ninongChoice">
+        <p class="choice-prompt">Yes Ravian!, I will be your</p>
+        <div class="choice-buttons">
+          <button class="choice-btn ninong" id="btnNinong" type="button">Ninong</button>
+          <button class="choice-btn ninang" id="btnNinang" type="button">Ninang</button>
+        </div>
       </div>
-    </div>
-    <div class="final-message" id="finalMessage"></div>
+      <div class="final-message" id="finalMessage"></div>
+    </section>
+
     <audio id="backgroundMusic" src="audio/play-piano.mp3" preload="auto" loop></audio>
     <audio id="ravianVoice" preload="none"></audio>
   </main>
-  <script src="js/script.js?v=20260730-1"></script>
+  <script src="js/script.js?v=20260731-mobile-1"></script>
+  <script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js');
+  </script>
 </body>
 </html>
